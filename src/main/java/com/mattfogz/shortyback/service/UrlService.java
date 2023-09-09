@@ -55,4 +55,8 @@ public class UrlService {
         Url url = new Url(newLongUrl, shortUrl);
         urlRepository.save(url);
     }
+
+    public void deleteShortUrl(String shortUrl) {
+        urlRepository.deleteById(shortUrl);
+    }
 }

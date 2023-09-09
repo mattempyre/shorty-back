@@ -1,7 +1,12 @@
 package com.mattfogz.shortyback.controller;
 
 import com.mattfogz.shortyback.service.UrlService;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,6 +29,17 @@ public class UrlController {
     @PutMapping("/update")
     public void updateUrl(@RequestBody UrlUpdateRequest request) {
         urlService.updateUrl(request.getShortUrl(), request.getNewLongUrl());
+    }
+
+    @DeleteMapping("/delete/{shortUrl}")
+    public ResponseEntity<Map<String, String>> deleteUrl(@PathVariable String shortUrl) {
+        urlService.deleteShortUrl(shortUrl);
+
+        // Create a response message
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "URL with short URL: " + shortUrl + " has been deleted.");
+
+        return ResponseEntity.ok(response); // Returns a 200 OK response with the message
     }
 
     // Inner DTO class for handling the POST request
