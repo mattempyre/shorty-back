@@ -1,7 +1,3 @@
-Certainly! Here's a comprehensive `README.md` for your project:
-
----
-
 # shorty-back - URL Shortening Service
 
 shorty-back is a backend service that provides URL shortening capabilities. It uses Spring Boot for the backend and Redis as the data store. The service offers creating custom short URLs, retrieving original URLs using the short version, updating URLs, and deleting them.
