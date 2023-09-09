@@ -20,14 +20,13 @@ public class UrlController {
 
     @PostMapping("/api/url/create")
     public String createShortUrl(@RequestBody UrlRequest request) {
-        return urlService.createShortUrl(request.getLongUrl());
+        return urlService.createShortUrl(request.getLongUrl(), request.getCustomShortUrl());
     }
 
     @GetMapping("/{shortUrl}")
     public ResponseEntity<Object> getLongUrl(@PathVariable String shortUrl) {
         String longUrl = urlService.getLongUrl(shortUrl);
 
-        // Hybrid approach: Return the long URL to the frontend and let frontend handle redirection.
         Map<String, String> response = new HashMap<>();
         response.put("redirectUrl", longUrl);
         return ResponseEntity.ok(response);
@@ -60,6 +59,7 @@ public class UrlController {
     // Inner DTO class for handling the POST request
     public static class UrlRequest {
         private String longUrl;
+        private String customShortUrl; // The new field
 
         public String getLongUrl() {
             return longUrl;
@@ -67,6 +67,14 @@ public class UrlController {
 
         public void setLongUrl(String longUrl) {
             this.longUrl = longUrl;
+        }
+
+        public String getCustomShortUrl() {
+            return customShortUrl;
+        }
+
+        public void setCustomShortUrl(String customShortUrl) {
+            this.customShortUrl = customShortUrl;
         }
     }
 

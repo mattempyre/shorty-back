@@ -2,6 +2,7 @@ package com.mattfogz.shortyback.service;
 
 import com.mattfogz.shortyback.model.Url;
 import com.mattfogz.shortyback.repository.UrlRepository;
+import com.mattfogz.shortyback.exception.UrlException; // Import the custom exception
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,7 +19,6 @@ public class UrlService {
     @Autowired
     private UrlRepository urlRepository;
 
-    // Generate a random short URL
     private String generateShortUrl() {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         Random rnd = new Random();
@@ -29,15 +29,17 @@ public class UrlService {
         return sb.toString();
     }
 
-    public String createShortUrl(String longUrl) {
+    public String createShortUrl(String longUrl, String customShortUrl) {
         Optional<Url> existingUrl = urlRepository.findByLongUrl(longUrl);
         if (existingUrl.isPresent()) {
             return existingUrl.get().getShortUrl();
         } else {
-            String shortUrl = generateShortUrl();
-            while(urlRepository.findById(shortUrl).isPresent()) { // Ensure uniqueness
-                shortUrl = generateShortUrl();
+            String shortUrl = (customShortUrl == null || customShortUrl.isEmpty()) ? generateShortUrl() : customShortUrl;
+
+            if(urlRepository.findById(shortUrl).isPresent()) {
+                throw new UrlException("Short URL already exists."); // Use custom exception
             }
+
             Url url = new Url(longUrl, shortUrl);
             urlRepository.save(url);
             return shortUrl;
@@ -46,15 +48,13 @@ public class UrlService {
 
     public String getLongUrl(String shortUrl) {
         Optional<Url> url = urlRepository.findById(shortUrl);
-        if (!url.isPresent()) {
-            throw new IllegalArgumentException("Short URL not found.");
-        }
-        return url.map(Url::getLongUrl).orElse(null);
+        return url.map(Url::getLongUrl).orElseThrow(() -> new UrlException("Short URL not found.")); // Use custom exception
     }
 
     public void updateUrl(String shortUrl, String newLongUrl) {
-        if (!urlRepository.findById(shortUrl).isPresent()) {
-            throw new IllegalArgumentException("Short URL not found. Cannot update.");
+        Optional<Url> existingUrl = urlRepository.findById(shortUrl);
+        if (!existingUrl.isPresent()) {
+            throw new UrlException("Short URL not found. Cannot update."); // Use custom exception
         }
         Url url = new Url(newLongUrl, shortUrl);
         urlRepository.save(url);
