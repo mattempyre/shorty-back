@@ -1,7 +1,7 @@
 package com.mattfogz.shortyback.controller;
 
-import com.mattfogz.shortyback.model.Url;
 import com.mattfogz.shortyback.service.UrlService;
+import com.mattfogz.shortyback.exception.UrlException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -33,21 +33,28 @@ public class UrlController {
      */
     @PostMapping("/api/url/create")
     public ResponseEntity<Map<String, String>> createShortUrl(@RequestBody UrlRequest request) {
-        // Call the UrlService to create a short URL based on the provided request
-        String shortUrl = urlService.createShortUrl(request.getLongUrl(), request.getCustomShortUrl());
+        try {
+            // Call the UrlService to create a short URL based on the provided request
+            String shortUrl = urlService.createShortUrl(request.getLongUrl(), request.getCustomShortUrl());
 
-        // Create a response map to structure the JSON response
-        Map<String, String> response = new HashMap<>();
+            // Create a response map to structure the JSON response
+            Map<String, String> response = new HashMap<>();
 
-        // Add the generated short URL to the response
-        response.put("shortUrl", shortUrl);
+            // Add the generated short URL to the response
+            response.put("shortUrl", shortUrl);
 
-        // Add a success message to the response (you can provide additional information
-        // here)
-        response.put("message", "Short URL created successfully.");
+            // Add a success message to the response (you can provide additional information
+            // here)
+            response.put("message", "Short URL created successfully.");
 
-        // Return a ResponseEntity with the JSON response and an HTTP status of OK
-        return ResponseEntity.ok(response);
+            // Return a ResponseEntity with the JSON response and an HTTP status of OK
+            return ResponseEntity.ok(response);
+        } catch (UrlException e) {
+            // Handle validation errors and send an error response to the client
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
     }
 
     /**
@@ -112,7 +119,7 @@ public class UrlController {
      */
     public static class UrlRequest {
         private String longUrl;
-        private String customShortUrl; // The new field
+        private String customShortUrl;
 
         public String getLongUrl() {
             return longUrl;

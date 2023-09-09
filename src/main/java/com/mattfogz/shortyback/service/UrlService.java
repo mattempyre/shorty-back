@@ -3,10 +3,9 @@ package com.mattfogz.shortyback.service;
 import com.mattfogz.shortyback.model.Url;
 import com.mattfogz.shortyback.repository.UrlRepository;
 import com.mattfogz.shortyback.exception.UrlException;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import org.apache.commons.validator.routines.UrlValidator;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,9 +21,11 @@ public class UrlService {
     @Autowired
     private UrlRepository urlRepository;
 
+    private Map<String, String> longToShortUrlMapping = new HashMap<>();
+
     /**
      * Generates a random 6-character short URL string.
-     * 
+     *
      * @return Randomly generated short URL string
      */
     private String generateShortUrl() {
@@ -43,25 +44,53 @@ public class UrlService {
     /**
      * Creates a short URL for the given long URL. If a custom short URL is
      * provided, it uses that, otherwise, it generates a random one.
-     * 
+     *
      * @param longUrl        Original long URL
      * @param customShortUrl Custom short URL provided by the user (can be null)
      * @return Created short URL
-     * @throws UrlException if the desired short URL already exists
+     * @throws UrlException if the URL format is invalid
      */
     public String createShortUrl(String longUrl, String customShortUrl) {
         // Normalize the long URL by converting it to lowercase and removing any
         // "http://" or "https://"
         String lowercaseLongUrl = normalizeLongUrl(longUrl);
 
-        // Check if a custom short URL is provided. If not, generate one
-        String shortUrl = (customShortUrl == null || customShortUrl.isEmpty()) ? generateShortUrl()
-                : customShortUrl;
+        // Check if a custom short URL is provided. If not, check if the long URL
+        // already exists with a generated short URL.
+        String shortUrl;
 
-        // Ensure the desired short URL does not already exist in the database
-        // (case-insensitive search)
-        if (urlRepository.findById(shortUrl).isPresent()) {
-            throw new UrlException("Short URL already exists. Please choose another");
+        if (customShortUrl == null || customShortUrl.isEmpty()) {
+            // Check if the long URL already exists with a generated short URL
+            if (longToShortUrlMapping.containsKey(lowercaseLongUrl)) {
+                // Use the existing generated short URL
+                shortUrl = longToShortUrlMapping.get(lowercaseLongUrl);
+            } else {
+                // Generate a new short URL only if it's the first entry with this long URL
+                shortUrl = generateShortUrl();
+
+                // Ensure the desired short URL does not already exist in the database
+                // (case-insensitive search)
+                while (urlRepository.findById(shortUrl).isPresent()) {
+                    shortUrl = generateShortUrl();
+                }
+
+                // Store the mapping of long URL to generated short URL
+                longToShortUrlMapping.put(lowercaseLongUrl, shortUrl);
+            }
+        } else {
+            // Use the custom short URL provided by the user
+            shortUrl = customShortUrl;
+
+            // Ensure the custom short URL does not already exist in the database
+            // (case-insensitive search)
+            if (urlRepository.findById(shortUrl).isPresent()) {
+                throw new UrlException("Custom short URL already exists. Please choose another");
+            }
+        }
+
+        // Validate the long URL
+        if (!isValidUrl(lowercaseLongUrl)) {
+            throw new UrlException("Invalid URL format.");
         }
 
         // Save the new mapping of long URL and short URL in the database
@@ -75,7 +104,11 @@ public class UrlService {
         // Check if "http://" or "https://" is present in the original URL, and if not,
         // prepend "https://www."
         if (!longUrl.startsWith("http://") && !longUrl.startsWith("https://")) {
-            longUrl = "https://www." + longUrl;
+            if (!longUrl.startsWith("www.")) {
+                longUrl = "https://www." + longUrl;
+            } else {
+                longUrl = "https://" + longUrl;
+            }
         }
 
         // Normalize the long URL by converting it to lowercase
@@ -198,5 +231,21 @@ public class UrlService {
         }
 
         return urlList;
+    }
+
+    /**
+     * Validates whether a given URL is valid.
+     *
+     * @param url The URL to validate.
+     * @return true if the URL is valid, false otherwise.
+     */
+    public boolean isValidUrl(String url) {
+        // Define URL validation options (you can customize this as needed)
+        UrlValidator urlValidator = new UrlValidator(
+                new String[] { "http", "https" },
+                UrlValidator.ALLOW_LOCAL_URLS);
+
+        // Check if the URL is valid
+        return urlValidator.isValid(url);
     }
 }
