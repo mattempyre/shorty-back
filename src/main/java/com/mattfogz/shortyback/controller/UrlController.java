@@ -10,36 +10,43 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/url")
+@RequestMapping("/")
 public class UrlController {
 
     @Autowired
     private UrlService urlService;
 
-    @PostMapping("/create")
+    @PostMapping("/api/url/create")
     public String createShortUrl(@RequestBody UrlRequest request) {
         return urlService.createShortUrl(request.getLongUrl());
     }
 
-    @GetMapping("/get/{shortUrl}")
-    public String getLongUrl(@PathVariable String shortUrl) {
-        return urlService.getLongUrl(shortUrl);
+    @GetMapping("/{shortUrl}")
+    public ResponseEntity<Object> getLongUrl(@PathVariable String shortUrl) {
+        String longUrl = urlService.getLongUrl(shortUrl);
+
+        // Hybrid approach: Return the long URL to the frontend and let frontend handle redirection.
+        Map<String, String> response = new HashMap<>();
+        response.put("redirectUrl", longUrl);
+        return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/update")
-    public void updateUrl(@RequestBody UrlUpdateRequest request) {
+    @PutMapping("/api/url/update")
+    public ResponseEntity<Map<String, String>> updateUrl(@RequestBody UrlUpdateRequest request) {
         urlService.updateUrl(request.getShortUrl(), request.getNewLongUrl());
+    
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "URL updated successfully.");
+        return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/delete/{shortUrl}")
+    @DeleteMapping("/api/url/delete/{shortUrl}")
     public ResponseEntity<Map<String, String>> deleteUrl(@PathVariable String shortUrl) {
         urlService.deleteShortUrl(shortUrl);
 
-        // Create a response message
         Map<String, String> response = new HashMap<>();
         response.put("message", "URL with short URL: " + shortUrl + " has been deleted.");
-
-        return ResponseEntity.ok(response); // Returns a 200 OK response with the message
+        return ResponseEntity.ok(response);
     }
 
     // Inner DTO class for handling the POST request
