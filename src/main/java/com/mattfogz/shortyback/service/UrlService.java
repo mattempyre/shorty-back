@@ -37,7 +37,7 @@ public class UrlService {
             String shortUrl = (customShortUrl == null || customShortUrl.isEmpty()) ? generateShortUrl() : customShortUrl;
 
             if(urlRepository.findById(shortUrl).isPresent()) {
-                throw new UrlException("Short URL already exists."); // Use custom exception
+                throw new UrlException("Short URL already exists. Please choose another"); // Use custom exception
             }
 
             Url url = new Url(longUrl, shortUrl);
