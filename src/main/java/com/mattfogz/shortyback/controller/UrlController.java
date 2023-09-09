@@ -36,17 +36,23 @@ public class UrlController {
         try {
             // Call the UrlService to create a short URL based on the provided request
             String shortUrl = urlService.createShortUrl(request.getLongUrl(), request.getCustomShortUrl());
-
+    
+            // Retrieve the longUrl and clickCount from the service
+            String longUrl = urlService.getLongUrl(shortUrl);
+            int clickCount = urlService.getClickCount(shortUrl);
+    
             // Create a response map to structure the JSON response
             Map<String, String> response = new HashMap<>();
-
-            // Add the generated short URL to the response
+    
+            // Add the generated short URL, longUrl, and clickCount to the response
             response.put("shortUrl", shortUrl);
-
+            response.put("longUrl", longUrl);
+            response.put("clickCount", String.valueOf(clickCount));
+    
             // Add a success message to the response (you can provide additional information
             // here)
             response.put("message", "Short URL created successfully.");
-
+    
             // Return a ResponseEntity with the JSON response and an HTTP status of OK
             return ResponseEntity.ok(response);
         } catch (UrlException e) {
@@ -56,7 +62,6 @@ public class UrlController {
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }
-
     /**
      * Endpoint to retrieve the original long URL using the short URL.
      *

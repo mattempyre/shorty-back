@@ -151,6 +151,24 @@ public class UrlService {
     }
 
     /**
+     * Retrieves the click count for the given short URL.
+     *
+     * @param shortUrl Short URL to retrieve the click count for.
+     * @return Click count
+     * @throws UrlException if the provided short URL is not found in the database
+     */
+    public int getClickCount(String shortUrl) {
+        // Implement the logic to retrieve the click count for the given short URL
+        // You can use your repository or any other data source for this
+        Optional<Url> url = urlRepository.findById(shortUrl);
+        if (url.isPresent()) {
+            return url.get().getClickCount();
+        } else {
+            throw new UrlException("Short URL not found.");
+        }
+    }
+
+    /**
      * Updates the long URL corresponding to the provided short URL in a
      * case-insensitive manner.
      *
