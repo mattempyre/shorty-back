@@ -2,11 +2,15 @@ package com.mattfogz.shortyback.service;
 
 import com.mattfogz.shortyback.model.Url;
 import com.mattfogz.shortyback.repository.UrlRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Service
 public class UrlService {
@@ -58,5 +62,11 @@ public class UrlService {
 
     public void deleteShortUrl(String shortUrl) {
         urlRepository.deleteById(shortUrl);
+    }
+
+    public List<Url> getAllUrls() {
+        Iterable<Url> urls = urlRepository.findAll();
+        return StreamSupport.stream(urls.spliterator(), false)
+                            .collect(Collectors.toList());
     }
 }

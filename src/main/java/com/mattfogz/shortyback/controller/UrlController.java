@@ -1,8 +1,10 @@
 package com.mattfogz.shortyback.controller;
 
+import com.mattfogz.shortyback.model.Url;
 import com.mattfogz.shortyback.service.UrlService;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +49,12 @@ public class UrlController {
         Map<String, String> response = new HashMap<>();
         response.put("message", "URL with short URL: " + shortUrl + " has been deleted.");
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/api/url/all")
+    public ResponseEntity<List<Url>> getAllUrls() {
+        List<Url> urls = urlService.getAllUrls();
+        return ResponseEntity.ok(urls);
     }
 
     // Inner DTO class for handling the POST request
