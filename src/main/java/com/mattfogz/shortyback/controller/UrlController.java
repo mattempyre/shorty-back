@@ -24,14 +24,30 @@ public class UrlController {
     private UrlService urlService;
 
     /**
-     * Endpoint to create a short URL.
-     * 
-     * @param request DTO containing the long URL and an optional custom short URL.
-     * @return The created short URL.
+     * REST endpoint for creating a short URL.
+     *
+     * @param request The request body containing the long URL and an optional
+     *                custom short URL.
+     * @return A ResponseEntity containing a JSON response with the short URL and a
+     *         success message.
      */
     @PostMapping("/api/url/create")
-    public String createShortUrl(@RequestBody UrlRequest request) {
-        return urlService.createShortUrl(request.getLongUrl(), request.getCustomShortUrl());
+    public ResponseEntity<Map<String, String>> createShortUrl(@RequestBody UrlRequest request) {
+        // Call the UrlService to create a short URL based on the provided request
+        String shortUrl = urlService.createShortUrl(request.getLongUrl(), request.getCustomShortUrl());
+
+        // Create a response map to structure the JSON response
+        Map<String, String> response = new HashMap<>();
+
+        // Add the generated short URL to the response
+        response.put("shortUrl", shortUrl);
+
+        // Add a success message to the response (you can provide additional information
+        // here)
+        response.put("message", "Short URL created successfully.");
+
+        // Return a ResponseEntity with the JSON response and an HTTP status of OK
+        return ResponseEntity.ok(response);
     }
 
     /**

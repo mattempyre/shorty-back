@@ -15,10 +15,10 @@ import java.util.Optional;
 public interface UrlRepository extends CrudRepository<Url, String> {
 
     /**
-     * Custom query method to find a Url entity by its long URL.
+     * Custom query method to find a Url entity by its long URL (case-insensitive).
      *
-     * @param longUrl The long URL to search for.
+     * @param longUrl The long URL to search for (case-insensitive).
      * @return An Optional containing the found Url entity, or empty if not found.
      */
-    Optional<Url> findByLongUrl(String longUrl);
+    Optional<Url> findByLongUrlIgnoreCase(String longUrl);
 }
