@@ -7,7 +7,10 @@ import com.mattfogz.shortyback.exception.UrlException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -47,7 +50,8 @@ public class UrlService {
      * @throws UrlException if the desired short URL already exists
      */
     public String createShortUrl(String longUrl, String customShortUrl) {
-        // Normalize the long URL by converting it to lowercase and removing any "http://" or "https://"
+        // Normalize the long URL by converting it to lowercase and removing any
+        // "http://" or "https://"
         String lowercaseLongUrl = normalizeLongUrl(longUrl);
 
         // Check if a custom short URL is provided. If not, generate one
@@ -68,43 +72,50 @@ public class UrlService {
     }
 
     private String normalizeLongUrl(String longUrl) {
-        // Check if "http://" or "https://" is present in the original URL, and if not, prepend "https://www."
+        // Check if "http://" or "https://" is present in the original URL, and if not,
+        // prepend "https://www."
         if (!longUrl.startsWith("http://") && !longUrl.startsWith("https://")) {
             longUrl = "https://www." + longUrl;
         }
-    
+
         // Normalize the long URL by converting it to lowercase
         return longUrl.toLowerCase();
     }
 
-/**
- * Retrieves the original long URL corresponding to the provided short URL in a
- * case-insensitive manner. Ensures that the retrieved URL starts with at least "http://".
- *
- * @param shortUrl Short URL to look up (case-insensitive).
- * @return Original long URL
- * @throws UrlException if the provided short URL is not found in the database
- */
-public String getLongUrl(String shortUrl) {
-    // Perform a case-insensitive lookup
-    Optional<Url> url = StreamSupport.stream(urlRepository.findAll().spliterator(), false)
-            .filter(u -> u.getShortUrl().equalsIgnoreCase(shortUrl))
-            .findFirst();
+    /**
+     * Retrieves the original long URL corresponding to the provided short URL in a
+     * case-insensitive manner. Ensures that the retrieved URL starts with at least
+     * "http://". Also, increments the click count.
+     *
+     * @param shortUrl Short URL to look up (case-insensitive).
+     * @return Original long URL
+     * @throws UrlException if the provided short URL is not found in the database
+     */
+    public String getLongUrl(String shortUrl) {
+        // Perform a case-insensitive lookup
+        Optional<Url> url = StreamSupport.stream(urlRepository.findAll().spliterator(), false)
+                .filter(u -> u.getShortUrl().equalsIgnoreCase(shortUrl))
+                .findFirst();
 
-    if (url.isPresent()) {
-        // Normalize the long URL by ensuring it starts with at least "http://"
-        String longUrl = url.get().getLongUrl();
-        if (!longUrl.startsWith("http://") && !longUrl.startsWith("https://")) {
-            longUrl = "http://" + longUrl;
+        if (url.isPresent()) {
+            // Normalize the long URL by ensuring it starts with at least "http://"
+            String longUrl = url.get().getLongUrl();
+            if (!longUrl.startsWith("http://") && !longUrl.startsWith("https://")) {
+                longUrl = "http://" + longUrl;
+            }
+
+            // Increment the click count
+            Url urlEntity = url.get();
+            urlEntity.setClickCount(urlEntity.getClickCount() + 1);
+            urlRepository.save(urlEntity);
+
+            // Convert the long URL to lowercase before returning
+            String lowercaseLongUrl = longUrl.toLowerCase();
+            return lowercaseLongUrl;
+        } else {
+            throw new UrlException("Short URL not found.");
         }
-
-        // Convert the long URL to lowercase before returning
-        String lowercaseLongUrl = longUrl.toLowerCase();
-        return lowercaseLongUrl;
-    } else {
-        throw new UrlException("Short URL not found.");
     }
-}
 
     /**
      * Updates the long URL corresponding to the provided short URL in a
@@ -166,5 +177,26 @@ public String getLongUrl(String shortUrl) {
         Iterable<Url> urls = urlRepository.findAll();
         // Convert Iterable<Url> to List<Url>
         return StreamSupport.stream(urls.spliterator(), false).collect(Collectors.toList());
+    }
+
+    /**
+     * Retrieves all the URL mappings (both long and short) from the database,
+     * including click counts.
+     * 
+     * @return List of URL mappings with click counts
+     */
+    public List<Map<String, String>> getAllUrlsWithClickCount() {
+        Iterable<Url> urls = urlRepository.findAll();
+        List<Map<String, String>> urlList = new ArrayList<>();
+
+        for (Url url : urls) {
+            Map<String, String> urlInfo = new HashMap<>();
+            urlInfo.put("longUrl", url.getLongUrl());
+            urlInfo.put("shortUrl", url.getShortUrl());
+            urlInfo.put("clickCount", String.valueOf(url.getClickCount())); // Add click count to the response
+            urlList.add(urlInfo);
+        }
+
+        return urlList;
     }
 }

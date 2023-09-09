@@ -8,27 +8,41 @@ import org.springframework.data.redis.core.index.Indexed;
  * Represents a URL entity to be stored in a Redis database.
  * The entity contains both a long URL and its corresponding short URL.
  */
-@RedisHash("Url")  // This annotation indicates this object can be saved in Redis and is associated with the "Url" hash.
+@RedisHash("Url") // This annotation indicates this object can be saved in Redis and is associated
+                  // with the "Url" hash.
 public class Url {
-    
-    @Indexed  // This annotation ensures the longUrl can be efficiently queried in Redis.
+
+    @Indexed // This annotation ensures the longUrl can be efficiently queried in Redis.
     private String longUrl;
-    
-    @Id  // This annotation denotes the primary key for Redis entries. Each URL will have a unique short URL.
+
+    @Id // This annotation denotes the primary key for Redis entries. Each URL will have
+        // a unique short URL.
     private String shortUrl;
 
+    private int clickCount = 0;
+
     // Default no-args constructor. Required by Spring Data.
-    public Url() {}
+    public Url() {
+    }
 
     /**
      * Parameterized constructor to create a Url object.
      * 
-     * @param longUrl The original long URL.
+     * @param longUrl  The original long URL.
      * @param shortUrl The shortened URL representation.
      */
     public Url(String longUrl, String shortUrl) {
         this.longUrl = longUrl;
         this.shortUrl = shortUrl;
+    }
+
+    // Getter and setter for clickCount
+    public int getClickCount() {
+        return clickCount;
+    }
+
+    public void setClickCount(int clickCount) {
+        this.clickCount = clickCount;
     }
 
     // Getter for longUrl
@@ -50,7 +64,4 @@ public class Url {
     public void setShortUrl(String shortUrl) {
         this.shortUrl = shortUrl;
     }
-
-    // Optionally, you can override `hashCode()`, `equals()`, and `toString()` if needed, 
-    // especially if you plan on storing Url objects in collections, comparing them, or need custom string representations.
 }

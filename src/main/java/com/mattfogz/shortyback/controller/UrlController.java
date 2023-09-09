@@ -96,13 +96,13 @@ public class UrlController {
     }
 
     /**
-     * Endpoint to retrieve all the stored URLs.
+     * Endpoint to retrieve all the stored URLs, including click counts.
      *
-     * @return A ResponseEntity containing a list of all stored URLs.
+     * @return A ResponseEntity containing a list of all stored URLs with click counts.
      */
     @GetMapping("/api/url/all")
-    public ResponseEntity<List<Url>> getAllUrls() {
-        List<Url> urls = urlService.getAllUrls();
+    public ResponseEntity<List<Map<String, String>>> getAllUrlsWithClickCount() {
+        List<Map<String, String>> urls = urlService.getAllUrlsWithClickCount();
         return ResponseEntity.ok(urls);
     }
 
