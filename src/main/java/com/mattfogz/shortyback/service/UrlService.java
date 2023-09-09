@@ -39,8 +39,7 @@ public class UrlService {
 
     /**
      * Creates a short URL for the given long URL. If a custom short URL is
-     * provided,
-     * it uses that, otherwise, it generates a random one.
+     * provided, it uses that, otherwise, it generates a random one.
      * 
      * @param longUrl        Original long URL
      * @param customShortUrl Custom short URL provided by the user (can be null)
@@ -48,29 +47,24 @@ public class UrlService {
      * @throws UrlException if the desired short URL already exists
      */
     public String createShortUrl(String longUrl, String customShortUrl) {
-        // Check if this long URL already exists in the database (case-insensitive
-        // search)
-        Optional<Url> existingUrl = urlRepository.findByLongUrlIgnoreCase(longUrl);
+        // Convert the long URL to lowercase
+        String lowercaseLongUrl = longUrl.toLowerCase();
 
-        if (existingUrl.isPresent()) {
-            // Return the existing short URL if the long URL is already present
-            return existingUrl.get().getShortUrl();
-        } else {
-            // Check if a custom short URL is provided. If not, generate one
-            String shortUrl = (customShortUrl == null || customShortUrl.isEmpty()) ? generateShortUrl()
-                    : customShortUrl;
+        // Check if a custom short URL is provided. If not, generate one
+        String shortUrl = (customShortUrl == null || customShortUrl.isEmpty()) ? generateShortUrl()
+                : customShortUrl;
 
-            // Ensure the desired short URL does not already exist in the database
-            if (urlRepository.findById(shortUrl).isPresent()) {
-                throw new UrlException("Short URL already exists. Please choose another");
-            }
-
-            // Save the new mapping of long URL and short URL in the database
-            Url url = new Url(longUrl, shortUrl);
-            urlRepository.save(url);
-
-            return shortUrl;
+        // Ensure the desired short URL does not already exist in the database
+        // (case-insensitive search)
+        if (urlRepository.findById(shortUrl).isPresent()) {
+            throw new UrlException("Short URL already exists. Please choose another");
         }
+
+        // Save the new mapping of long URL and short URL in the database
+        Url url = new Url(lowercaseLongUrl, shortUrl);
+        urlRepository.save(url);
+
+        return shortUrl;
     }
 
     /**
@@ -87,7 +81,13 @@ public class UrlService {
                 .filter(u -> u.getShortUrl().equalsIgnoreCase(shortUrl))
                 .findFirst();
 
-        return url.map(Url::getLongUrl).orElseThrow(() -> new UrlException("Short URL not found."));
+        if (url.isPresent()) {
+            // Convert the long URL to lowercase before returning
+            String lowercaseLongUrl = url.get().getLongUrl().toLowerCase();
+            return lowercaseLongUrl;
+        } else {
+            throw new UrlException("Short URL not found.");
+        }
     }
 
     /**
