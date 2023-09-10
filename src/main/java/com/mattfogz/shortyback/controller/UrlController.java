@@ -78,6 +78,15 @@ public class UrlController {
         }
     }
 
+    // Endpoint to retrieve the click count for a specific short URL.
+    @GetMapping("/api/url/clickCount/{shortUrl}")
+    public ResponseEntity<Map<String, Integer>> getClickCount(@PathVariable String shortUrl) {
+        int clickCount = urlService.getClickCount(shortUrl);
+        Map<String, Integer> response = new HashMap<>();
+        response.put("clickCount", clickCount);
+        return ResponseEntity.ok(response);
+    }
+
     @PutMapping("/api/url/update")
     public ResponseEntity<Map<String, String>> updateUrl(@RequestBody UrlUpdateRequest request) {
         urlService.updateUrl(request.getShortUrl(), request.getNewLongUrl());
