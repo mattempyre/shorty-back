@@ -118,35 +118,46 @@ public class UrlService {
     /**
      * Retrieves the original long URL corresponding to the provided short URL in a
      * case-insensitive manner. Ensures that the retrieved URL starts with at least
-     * "http://". Also, increments the click count.
+     * "http://".
      *
      * @param shortUrl Short URL to look up (case-insensitive).
      * @return Original long URL
      * @throws UrlException if the provided short URL is not found in the database
      */
     public String getLongUrl(String shortUrl) {
-        // Perform a case-insensitive lookup
         Optional<Url> url = StreamSupport.stream(urlRepository.findAll().spliterator(), false)
                 .filter(u -> u.getShortUrl().equalsIgnoreCase(shortUrl))
                 .findFirst();
 
         if (url.isPresent()) {
-            // Normalize the long URL by ensuring it starts with at least "http://"
             String longUrl = url.get().getLongUrl();
             if (!longUrl.startsWith("http://") && !longUrl.startsWith("https://")) {
                 longUrl = "http://" + longUrl;
             }
-
-            // Increment the click count
-            Url urlEntity = url.get();
-            urlEntity.setClickCount(urlEntity.getClickCount() + 1);
-            urlRepository.save(urlEntity);
-
-            // Convert the long URL to lowercase before returning
             String lowercaseLongUrl = longUrl.toLowerCase();
             return lowercaseLongUrl;
         } else {
             throw new UrlException("Short URL not found.");
+        }
+    }
+
+    /**
+     * Increments the click count of a short URL.
+     *
+     * @param shortUrl Short URL to increment click count for.
+     * @throws UrlException if the provided short URL is not found in the database
+     */
+    public void incrementClickCount(String shortUrl) {
+        Optional<Url> url = StreamSupport.stream(urlRepository.findAll().spliterator(), false)
+                .filter(u -> u.getShortUrl().equalsIgnoreCase(shortUrl))
+                .findFirst();
+
+        if (url.isPresent()) {
+            Url urlEntity = url.get();
+            urlEntity.setClickCount(urlEntity.getClickCount() + 1);
+            urlRepository.save(urlEntity);
+        } else {
+            throw new UrlException("Short URL not found. Cannot increment click count.");
         }
     }
 

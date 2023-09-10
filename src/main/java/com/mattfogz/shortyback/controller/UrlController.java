@@ -3,11 +3,13 @@ package com.mattfogz.shortyback.controller;
 import com.mattfogz.shortyback.service.UrlService;
 import com.mattfogz.shortyback.exception.UrlException;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,70 +21,63 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/")
 public class UrlController {
 
-    // Autowire the URL Service to delegate business logic operations
     @Autowired
     private UrlService urlService;
 
     /**
-     * REST endpoint for creating a short URL.
-     *
-     * @param request The request body containing the long URL and an optional
-     *                custom short URL.
-     * @return A ResponseEntity containing a JSON response with the short URL and a
-     *         success message.
+     * REST endpoint to create a short URL.
+     * 
+     * @param request DTO containing the long URL and optional custom short URL.
+     * @return JSON response with the short URL and success message.
      */
     @PostMapping("/api/url/create")
     public ResponseEntity<Map<String, String>> createShortUrl(@RequestBody UrlRequest request) {
         try {
-            // Call the UrlService to create a short URL based on the provided request
             String shortUrl = urlService.createShortUrl(request.getLongUrl(), request.getCustomShortUrl());
-    
-            // Retrieve the longUrl and clickCount from the service
             String longUrl = urlService.getLongUrl(shortUrl);
             int clickCount = urlService.getClickCount(shortUrl);
-    
-            // Create a response map to structure the JSON response
+
             Map<String, String> response = new HashMap<>();
-    
-            // Add the generated short URL, longUrl, and clickCount to the response
             response.put("shortUrl", shortUrl);
             response.put("longUrl", longUrl);
             response.put("clickCount", String.valueOf(clickCount));
-    
-            // Add a success message to the response (you can provide additional information
-            // here)
             response.put("message", "Short URL created successfully.");
-    
-            // Return a ResponseEntity with the JSON response and an HTTP status of OK
+
             return ResponseEntity.ok(response);
         } catch (UrlException e) {
-            // Handle validation errors and send an error response to the client
             Map<String, String> errorResponse = new HashMap<>();
             errorResponse.put("error", e.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }
+
     /**
-     * Endpoint to retrieve the original long URL using the short URL.
-     *
-     * @param shortUrl The short URL to lookup.
-     * @return A ResponseEntity containing the original long URL.
+     * Endpoint to retrieve the original long URL using the short URL and redirect
+     * to it.
+     * Also increments the click count for the short URL when accessed.
+     * 
+     * @param shortUrl The short URL to lookup and redirect to its corresponding
+     *                 long URL.
+     * @return Redirect response to the original long URL or an error if not found.
      */
     @GetMapping("/{shortUrl}")
-    public ResponseEntity<Object> getLongUrl(@PathVariable String shortUrl) {
+    public ResponseEntity<Void> getLongUrl(@PathVariable String shortUrl) {
         String longUrl = urlService.getLongUrl(shortUrl);
+        if (longUrl != null) {
+            // Increment the click count for the accessed short URL
+            urlService.incrementClickCount(shortUrl);
 
-        Map<String, String> response = new HashMap<>();
-        response.put("redirectUrl", longUrl);
-        return ResponseEntity.ok(response);
+            // Issue an HTTP 302 Found response to redirect the client
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create(longUrl))
+                    .build();
+        } else {
+            // If the shortUrl isn't found in the system, you can send a 404 or another
+            // suitable error response
+            return ResponseEntity.notFound().build();
+        }
     }
 
-    /**
-     * Endpoint to update an existing short URL to point to a new long URL.
-     *
-     * @param request DTO containing the short URL and the new long URL.
-     * @return A ResponseEntity indicating success.
-     */
     @PutMapping("/api/url/update")
     public ResponseEntity<Map<String, String>> updateUrl(@RequestBody UrlUpdateRequest request) {
         urlService.updateUrl(request.getShortUrl(), request.getNewLongUrl());
@@ -92,12 +87,6 @@ public class UrlController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Endpoint to delete a short URL entry.
-     *
-     * @param shortUrl The short URL to delete.
-     * @return A ResponseEntity indicating success.
-     */
     @DeleteMapping("/api/url/delete/{shortUrl}")
     public ResponseEntity<Map<String, String>> deleteUrl(@PathVariable String shortUrl) {
         urlService.deleteShortUrl(shortUrl);
@@ -107,11 +96,6 @@ public class UrlController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Endpoint to retrieve all the stored URLs, including click counts.
-     *
-     * @return A ResponseEntity containing a list of all stored URLs with click counts.
-     */
     @GetMapping("/api/url/all")
     public ResponseEntity<List<Map<String, String>>> getAllUrlsWithClickCount() {
         List<Map<String, String>> urls = urlService.getAllUrlsWithClickCount();
