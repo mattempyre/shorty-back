@@ -18,6 +18,7 @@ For the front-end code and additional details [Shorty Frontend Repository](https
   - [Listing All Shortened URLs](#listing-all-shortened-urls)
 - [Testing](#testing)
 
+- [Api Documentation](#api)
 ## Getting Started
 
 ### Prerequisites
@@ -271,3 +272,241 @@ Certainly, here are some example testing commands for Insomnia and Postman that 
 #### Expected Response:
 - **Status Code:** 200 OK
 - **Body:** A list of all shortened URLs in JSON format.on.
+
+## API
+# API Documentation for ShortyBack
+
+ShortyBack is a URL shortening service that allows users to create short URLs for long web addresses. This API documentation provides details on how to use the ShortyBack API for various URL shortening operations.
+
+## Table of Contents
+- [API Endpoints](#api-endpoints)
+  - [Create a Short URL](#create-a-short-url)
+  - [Retrieve the Original URL](#retrieve-the-original-url)
+  - [Increment Click Count](#increment-click-count)
+  - [Update a URL](#update-a-url)
+  - [Delete a URL](#delete-a-url)
+  - [Get All URLs with Click Counts](#get-all-urls-with-click-counts)
+- [Global Exception Handling](#global-exception-handling)
+- [Data Models](#data-models)
+
+## Introduction
+
+ShortyBack is a Spring Boot-based URL shortening service that utilizes Redis as its data store. It offers the following functionality through its API:
+
+- Create a short URL for a given long URL.
+- Retrieve the original long URL associated with a short URL.
+- Increment the click count of a short URL.
+- Update the long URL associated with a short URL.
+- Delete a short URL and its associated mapping.
+- Get a list of all URLs with their associated click counts.
+
+## API Endpoints
+
+### Create a Short URL
+
+**Endpoint:** `/api/url/create`
+
+**HTTP Method:** `POST`
+
+**Request Body:**
+```json
+{
+  "longUrl": "https://example.com",
+  "customShortUrl": "custom"
+}
+```
+
+- `longUrl` (string, required): The original long URL.
+- `customShortUrl` (string, optional): A custom short URL. If not provided, a random short URL will be generated.
+
+**Response:**
+```json
+{
+  "shortUrl": "custom",
+  "longUrl": "https://example.com",
+  "clickCount": 0,
+  "message": "Short URL created successfully."
+}
+```
+
+- `shortUrl` (string): The short URL generated or provided.
+- `longUrl` (string): The original long URL.
+- `clickCount` (integer): The initial click count (0).
+- `message` (string): A success message.
+
+**Error Response:**
+```json
+{
+  "error": "Short URL already exists. Please choose another"
+}
+```
+
+- `error` (string): Error message indicating that the custom short URL already exists.
+
+### Retrieve the Original URL
+
+**Endpoint:** `GET /{shortUrl}`
+
+- `{shortUrl}` (string, required): The short URL to lookup and redirect to its corresponding long URL.
+
+**Response:** The API returns an HTTP 302 Found response, redirecting the client to the original long URL associated with the short URL. The click count for the short URL is also incremented.
+
+**Error Response:**
+
+- If the short URL isn't found in the system, the API returns an HTTP 404 Not Found response.
+
+### Increment Click Count
+
+**Endpoint:** `/api/url/clickCount/{shortUrl}`
+
+**HTTP Method:** `GET`
+
+- `{shortUrl}` (string, required): The short URL for which you want to retrieve the click count.
+
+**Response:**
+```json
+{
+  "clickCount": 5
+}
+```
+
+- `clickCount` (integer): The click count for the specified short URL.
+
+**Error Response:**
+```json
+{
+  "error": "Short URL not found."
+}
+```
+
+- `error` (string): Error message indicating that the short URL was not found.
+
+### Update a URL
+
+**Endpoint:** `/api/url/update`
+
+**HTTP Method:** `PUT`
+
+**Request Body:**
+```json
+{
+  "shortUrl": "custom",
+  "newLongUrl": "https://newexample.com"
+}
+```
+
+- `shortUrl` (string, required): The short URL to update.
+- `newLongUrl` (string, required): The new long URL to associate with the short URL.
+
+**Response:**
+```json
+{
+  "message": "URL updated successfully."
+}
+```
+
+- `message` (string): Success message indicating that the URL was updated successfully.
+
+**Error Response:**
+```json
+{
+  "error": "Short URL not found. Cannot update."
+}
+```
+
+- `error` (string): Error message indicating that the short URL was not found.
+
+### Delete a URL
+
+**Endpoint:** `/api/url/delete/{shortUrl}`
+
+**HTTP Method:** `DELETE`
+
+- `{shortUrl}` (string, required): The short URL to delete.
+
+**Response:**
+```json
+{
+  "message": "URL with short URL: custom has been deleted."
+}
+```
+
+- `message` (string): Success message indicating that the URL with the specified short URL has been deleted.
+
+**Error Response:**
+```json
+{
+  "error": "Short URL not found. Cannot delete."
+}
+```
+
+- `error` (string): Error message indicating that the short URL was not found.
+
+### Get All URLs with Click Counts
+
+**Endpoint:** `/api/url/all`
+
+**HTTP Method:** `GET`
+
+**Response:**
+```json
+[
+  {
+    "longUrl": "https://example.com",
+    "shortUrl": "custom",
+    "clickCount": 5
+  },
+  {
+    "longUrl": "https://anotherexample.com",
+    "shortUrl": "another",
+    "clickCount": 3
+  }
+]
+```
+
+- An array of objects containing:
+  - `longUrl` (string): The original long URL.
+  - `shortUrl` (string): The short URL.
+  - `clickCount` (integer): The click count for the short URL.
+
+## Global Exception Handling
+
+The ShortyBack API employs global exception handling to provide consistent error responses. Two types of exceptions are handled:
+
+1. `UrlException`: Custom exception for URL-related errors.
+2. `IllegalArgumentException`: Exception for invalid input data.
+
+Responses for these exceptions include error messages and HTTP status codes:
+
+- `UrlException`: HTTP status code `400 Bad Request`.
+- `IllegalArgumentException`: HTTP status code `400 Bad Request`.
+
+## Data Models
+
+### URL Entity
+
+The `Url` entity represents a URL mapping and is stored in a Redis database. It contains the following attributes:
+
+- `longUrl` (string): The original long URL.
+- `shortUrl` (string): The shortened URL representation.
+- `clickCount` (integer): The click count for the short URL.
+
+### URL Request DTO
+
+#### Create URL Request DTO
+
+The `UrlRequest` DTO is used for creating short URLs and contains the following attributes:
+
+- `longUrl` (string): The original long URL.
+- `customShortUrl` (string, optional): A custom short URL. If not provided, a random short URL will be generated.
+
+#### Update URL Request DTO
+
+The `UrlUpdateRequest` DTO is used for updating the long URL associated with a short URL and contains the following attributes:
+
+- `shortUrl` (string): The short URL to update.
+- `newLongUrl` (string): The new long URL to associate with the short URL.
+
+This documentation outlines the endpoints, request and response formats, and error handling for the ShortyBack API. Please refer to the corresponding sections for more information on
+
+ how to use the API for URL shortening and management.
