@@ -12,16 +12,31 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
+import javax.annotation.PostConstruct;
+
+// import java.util.concurrent.ConcurrentHashMap;
+// import java.util.concurrent.ConcurrentMap;
 
 @Service
 public class UrlService {
 
+    // Use ConcurrentHashMap for thread safety
+    private ConcurrentMap<String, String> longToShortUrlMapping = new ConcurrentHashMap<>();
+
     @Autowired
     private UrlRepository urlRepository;
 
-    private Map<String, String> longToShortUrlMapping = new HashMap<>();
+    @PostConstruct
+    public void init() {
+        urlRepository.findAll().forEach(url -> {
+            longToShortUrlMapping.put(url.getLongUrl(), url.getShortUrl());
+        });
+    }
 
     /**
      * Generates a random 6-character short URL string.
@@ -311,7 +326,7 @@ public class UrlService {
         // Define URL validation options (you can customize this as needed)
         UrlValidator urlValidator = new UrlValidator(
                 new String[] { "http", "https" });
-    
+
         // Check if the URL is valid
         return urlValidator.isValid(url);
     }
