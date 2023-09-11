@@ -100,43 +100,79 @@ public class UrlService {
         return shortUrl;
     }
 
+    /**
+     * Normalizes the provided long URL by applying the following transformations:
+     * <ul>
+     * <li>Convert the entire URL to lowercase</li>
+     * <li>Remove "http://" or "https://" prefixes, if they exist</li>
+     * <li>Remove the "www." prefix, if it exists</li>
+     * <li>Strip off a trailing "/", if present</li>
+     * <li>Prepend the normalized URL with "http://"</li>
+     * </ul>
+     * This ensures uniformity and a standardized format for all URLs being
+     * processed.
+     *
+     * @param longUrl The original long URL to be normalized.
+     * @return A normalized version of the long URL.
+     */
     private String normalizeLongUrl(String longUrl) {
-        // Check if "http://" or "https://" is present in the original URL, and if not,
-        // prepend "https://www."
-        if (!longUrl.startsWith("http://") && !longUrl.startsWith("https://")) {
-            if (!longUrl.startsWith("www.")) {
-                longUrl = "https://www." + longUrl;
-            } else {
-                longUrl = "https://" + longUrl;
-            }
+        // Convert the entire URL to lowercase for uniformity
+        longUrl = longUrl.toLowerCase();
+
+        // Remove "http://", "https://", and "www." prefixes to standardize the URL
+        // format
+        if (longUrl.startsWith("http://")) {
+            longUrl = longUrl.substring(7);
+        } else if (longUrl.startsWith("https://")) {
+            longUrl = longUrl.substring(8);
         }
 
-        // Normalize the long URL by converting it to lowercase
-        return longUrl.toLowerCase();
+        if (longUrl.startsWith("www.")) {
+            longUrl = longUrl.substring(4);
+        }
+
+        // If the URL ends with a trailing "/", remove it for consistency
+        if (longUrl.endsWith("/")) {
+            longUrl = longUrl.substring(0, longUrl.length() - 1);
+        }
+
+        // Prepend the normalized URL with "http://" to ensure a minimum protocol is
+        // present
+        return "http://" + longUrl;
     }
 
     /**
-     * Retrieves the original long URL corresponding to the provided short URL in a
-     * case-insensitive manner. Ensures that the retrieved URL starts with at least
-     * "http://".
+     * Retrieves the original long URL associated with the given short URL. The
+     * lookup is case-insensitive.
+     * The method ensures that the retrieved URL starts with "http://". If the
+     * stored URL doesn't have this
+     * prefix, it is added for consistency. All returned URLs will be in lowercase
+     * for uniformity.
      *
-     * @param shortUrl Short URL to look up (case-insensitive).
-     * @return Original long URL
-     * @throws UrlException if the provided short URL is not found in the database
+     * @param shortUrl The short URL to lookup. The lookup is case-insensitive.
+     * @return The original long URL corresponding to the provided short URL.
+     * @throws UrlException If the provided short URL is not found in the database.
      */
     public String getLongUrl(String shortUrl) {
+        // Fetching all URLs from the repository and filtering to find the matching one
         Optional<Url> url = StreamSupport.stream(urlRepository.findAll().spliterator(), false)
                 .filter(u -> u.getShortUrl().equalsIgnoreCase(shortUrl))
                 .findFirst();
 
+        // If a matching URL is found
         if (url.isPresent()) {
             String longUrl = url.get().getLongUrl();
-            if (!longUrl.startsWith("http://") && !longUrl.startsWith("https://")) {
+
+            // Ensure the URL starts with "http://", adding the prefix if it's missing.
+            // This step handles any inconsistencies in previously stored data.
+            if (!longUrl.startsWith("http://")) {
                 longUrl = "http://" + longUrl;
             }
-            String lowercaseLongUrl = longUrl.toLowerCase();
-            return lowercaseLongUrl;
+
+            // Return the long URL in lowercase for consistency
+            return longUrl.toLowerCase();
         } else {
+            // Throw an exception if no matching URL is found
             throw new UrlException("Short URL not found.");
         }
     }
@@ -188,6 +224,9 @@ public class UrlService {
      * @throws UrlException if the provided short URL is not found in the database
      */
     public void updateUrl(String shortUrl, String newLongUrl) {
+        // Normalize the new long URL to ensure it's in the correct format
+        newLongUrl = normalizeLongUrl(newLongUrl);
+
         // Perform a case-insensitive lookup
         List<Url> allUrls = StreamSupport.stream(urlRepository.findAll().spliterator(), false)
                 .filter(u -> u.getShortUrl().equalsIgnoreCase(shortUrl))
