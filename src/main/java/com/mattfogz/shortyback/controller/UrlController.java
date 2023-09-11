@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpHeaders;
 
 /**
  * REST Controller that provides endpoints for URL shortening operations.
@@ -78,13 +79,16 @@ public class UrlController {
         }
     }
 
-    // Endpoint to retrieve the click count for a specific short URL.
     @GetMapping("/api/url/clickCount/{shortUrl}")
     public ResponseEntity<Map<String, Integer>> getClickCount(@PathVariable String shortUrl) {
         int clickCount = urlService.getClickCount(shortUrl);
         Map<String, Integer> response = new HashMap<>();
         response.put("clickCount", clickCount);
-        return ResponseEntity.ok(response);
+    
+        HttpHeaders headers = new HttpHeaders();
+        headers.setCacheControl("no-cache"); // Prevent caching
+    
+        return ResponseEntity.ok().headers(headers).body(response);
     }
 
     @PutMapping("/api/url/update")
