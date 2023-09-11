@@ -1,6 +1,8 @@
 # Shorty-Back
 
-Shorty-Back is a URL shortening service that allows you to create and manage short URLs for your long web addresses. This service is built with Spring Boot and uses Redis as a data store.
+Shorty-Back is a URL-shortening service that allows you to create and manage short URLs for your long web addresses. This service is built with Spring Boot and uses Redis as a data store.
+
+For the front-end code and additional details [Shorty Frontend Repository](https://github.com/mattempyre/shorty-front)
 
 ## Table of Contents
 
