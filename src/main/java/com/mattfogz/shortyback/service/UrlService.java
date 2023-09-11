@@ -310,9 +310,8 @@ public class UrlService {
     public boolean isValidUrl(String url) {
         // Define URL validation options (you can customize this as needed)
         UrlValidator urlValidator = new UrlValidator(
-                new String[] { "http", "https" },
-                UrlValidator.ALLOW_LOCAL_URLS);
-
+                new String[] { "http", "https" });
+    
         // Check if the URL is valid
         return urlValidator.isValid(url);
     }
